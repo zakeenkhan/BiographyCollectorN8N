@@ -1,0 +1,360 @@
+{
+  "name": "Evaluator Optimizer",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        80
+      ],
+      "id": "8acf3a6f-220f-4577-863d-57636ef768a1",
+      "name": "When chat message received",
+      "webhookId": "8a20f167-b78a-4f5e-851c-3b11a7d991b7"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a the expert biography writer. you will recieve information about the person and your job is to create an entire profile using the information they give you. you are allowed to be creative and cricital thinking."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        80
+      ],
+      "id": "8188c3a6-3088-4355-982e-89f0579a44d1",
+      "name": "Biography AI Agent"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "biography",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        576,
+        80
+      ],
+      "id": "825789ee-ff39-44a2-ba84-67fa8806e370",
+      "name": "Set bio"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.biography }}",
+        "options": {
+          "systemMessage": "##overview:\nYou are an expert biography evaluator. your job is to feedback on the biography.\n\n# Criteria\nMake sure the biography includes quotes from a person. this could be their Favourite saying or a piece of advice. it is essentional that every biography have a quote. \nmake sure the biography is light and humerious.\nmake sure the biography is no emojis\n\n#output\nyou only need to output feedback. if the biography is finished and all the criteria is met, simpily out is \"Finished\"."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        800,
+        80
+      ],
+      "id": "c4795b6b-da89-4f64-9716-d45fc6310b97",
+      "name": "Evaluator AI Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Biography:\n{{ $('Set bio').item.json.biography }}\n\nFeedback:\n{{ $('Evaluator AI Agent').item.json.output }}",
+        "options": {
+          "systemMessage": "You are an expert biography reviser. your job is to take the biography and optimized it based on the feedback."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1328,
+        144
+      ],
+      "id": "6c4cfb50-3606-4281-8801-fd3b3bb398a9",
+      "name": "Optimized AI Agent"
+    },
+    {
+      "parameters": {
+        "folderId": "1e2kmZNkIe-znI0khjzIRVlPADEsG9GlE",
+        "title": "=Biography - {{ $now.format('yyyy-MM-dd HH:mm') }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        -96
+      ],
+      "id": "9eb61d8b-f926-48e5-9768-a0faf64971ab",
+      "name": "Create a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "PXR0IygAE0G9TxHy",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "=https://docs.google.com/document/d/18WD3HSieATE37fNbNKCwIfx7jyES7X7UHQEmI0kCgWA/edit?tab=t.0",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "={{ $('Set bio').item.json.biography }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1728,
+        -96
+      ],
+      "id": "6c9576ff-fdf6-44ef-b142-13b462dfc108",
+      "name": "Update a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "PXR0IygAE0G9TxHy",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "853982d2-d5cf-44da-b6a9-2db1d7f0338f",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "Finished",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1152,
+        0
+      ],
+      "id": "d3803f02-97b9-452f-817d-ae41fa4b6997",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "biography",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "62a1f43a-ca90-47b9-a2fe-12a5d06cbf4b",
+      "name": "Update bio with optimized version",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1728,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        320
+      ],
+      "id": "5064d9b1-44ce-4d56-bc4d-fb1ebf4f7826",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "EIh7IiOk2PFD9kMD",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Biography AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Biography AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Set bio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set bio": {
+      "main": [
+        [
+          {
+            "node": "Evaluator AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluator AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a document": {
+      "main": [
+        [
+          {
+            "node": "Update a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create a document",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Optimized AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a document": {
+      "main": [
+        []
+      ]
+    },
+    "Optimized AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Update bio with optimized version",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update bio with optimized version": {
+      "main": [
+        [
+          {
+            "node": "Evaluator AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Biography AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Evaluator AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Optimized AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "50e6257e-2123-4aa9-9234-99d80b6831e2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "93405b9227e9e1530c54cbd68beb0d048c483a80b956404e118b6ec06110b253"
+  },
+  "id": "2SPaJuG8g9CWojg5",
+  "tags": []
+}
